@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard BI · 100 facturas</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0b1020;--panel:#141b30;--line:#26304d;--txt:#eef1f8;--mute:#9aa6c4;--gold:#fbbf24;--orange:#f97316;--green:#22c55e;--red:#ef4444}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+main{max-width:1080px;margin:0 auto;padding:48px 20px 64px}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:1.25rem;margin:0 0 14px;color:var(--gold)}
+.lead{color:var(--mute);max-width:62ch;margin:0 0 36px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px}
+.kpi{background:var(--panel);border-left:4px solid var(--orange);padding:16px 18px;border-radius:6px}
+.kpi b{display:block;font-size:1.9rem;color:var(--gold)}
+.kpi span{color:var(--mute);font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:18px;margin-bottom:18px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+.box.wide{grid-column:1/-1}
+.cv{position:relative;height:300px}
+ul{margin:0;padding-left:20px;color:var(--mute)} li{margin-bottom:6px} li b{color:var(--txt)}
+a{color:var(--gold)}
+footer{margin-top:32px;color:var(--mute);font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Dashboard de ventas: 100 facturas reales</h1>
+  <p class="lead">Análisis hecho con Python (Pandas y NumPy) sobre el dataset Online Retail. Muestra cuánto se vendió, qué productos y países generan más ingresos y cómo se reparten las facturas por monto.</p>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <div class="box"><h2>Top 5 productos por ventas (£)</h2><div class="cv"><canvas id="c1" role="img" aria-label="Barras con los 5 productos más vendidos"></canvas></div></div>
+    <div class="box"><h2>Facturas por categoría de monto</h2><div class="cv"><canvas id="c2" role="img" aria-label="Cantidad de facturas altas, medias y bajas"></canvas></div></div>
+    <div class="box wide"><h2>Ventas por país (£)</h2><div class="cv"><canvas id="c3" role="img" aria-label="Ventas por país"></canvas></div></div>
+  </section>
+
+  <section class="grid">
+    <div class="box"><h2>Qué hace el script</h2>
+      <ul>
+        <li><b>Carga</b> las primeras 100 facturas del Excel y controla errores con <code>try/except</code>.</li>
+        <li><b>Limpia</b> los datos: quita cancelaciones y recalcula totales con NumPy.</li>
+        <li><b>Clasifica</b> cada factura: Alta (≥ £300), Media (≥ £100) o Baja.</li>
+        <li><b>Calcula</b> indicadores con <code>Counter</code> y <code>defaultdict</code>.</li>
+        <li><b>Guarda</b> resultados en JSON, CSV y PNG.</li>
+      </ul>
+    </div>
+    <div class="box"><h2>Temas del curso aplicados</h2>
+      <ul>
+        <li>Módulos y excepciones</li>
+        <li>Manejo de archivos</li>
+        <li>Colecciones avanzadas y funciones</li>
+        <li>Estructuras de control, listas y bucles</li>
+        <li>Pandas y NumPy</li>
+      </ul>
+      <p style="margin:14px 0 0"><a href="dashboard_facturas.py">Ver el código en Python</a></p>
+    </div>
+  </section>
+
+  <footer>Fuente: Online Retail, UCI Machine Learning Repository (Daqing Chen, 2012), licencia CC BY 4.0. Moneda: libras esterlinas (GBP).</footer>
+</main>
+
+<script>
+const D = {"facturas": 100, "total": 39976.11, "ticket": 399.76, "max": 5521.14, "top": {"labels": ["Black Record Cover Frame", "Chilli Lights", "Regency Cakestand 3 Tier", "Paper Chain Kit 50'S Christmas ", "Light Garland Butterfiles Pink"], "vals": [1627.2, 1089.21, 811.5, 755.18, 647.04]}, "cat": {"Alta": 41, "Media": 32, "Baja": 27}, "paises": {"labels": ["United Kingdom", "Norway", "France", "EIRE", "Australia", "Germany", "Netherlands"], "vals": [35833.4, 1919.14, 855.86, 555.38, 358.25, 261.48, 192.6]}};
+const fmt = n => "£" + n.toLocaleString("en-GB", {maximumFractionDigits: 2});
+const kp = [["Facturas analizadas", D.facturas], ["Ventas totales", fmt(D.total)], ["Ticket promedio", fmt(D.ticket)], ["Factura más alta", fmt(D.max)]];
+document.getElementById("kpis").innerHTML = kp.map(k => `<div class="kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join("");
+
+Chart.defaults.color = "#9aa6c4";
+Chart.defaults.borderColor = "#26304d";
+const base = {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}}};
+
+new Chart(c1, {type: "bar", data: {labels: D.top.labels, datasets: [{data: D.top.vals, backgroundColor: "#f97316"}]},
+  options: {...base, indexAxis: "y"}});
+new Chart(c2, {type: "bar", data: {labels: Object.keys(D.cat), datasets: [{data: Object.values(D.cat), backgroundColor: ["#22c55e", "#fbbf24", "#ef4444"]}]},
+  options: base});
+new Chart(c3, {type: "bar", data: {labels: D.paises.labels, datasets: [{data: D.paises.vals, backgroundColor: "#fbbf24"}]},
+  options: {...base, scales: {y: {type: "logarithmic"}}}});
+</script>
+</body>
+</html>
